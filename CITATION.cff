@@ -1,0 +1,26 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: >-
+  Practica 2: Modelo y control del sistema cardiovascular
+  mediante el sistema windkessel
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Farid
+    family-names: Garcia Altamirano
+    email: l23212194@tijuana.tecnm.mx
+    affiliation: ITT/TECNM
+repository-code: 'https://github.com/Nefga/MSFP2'
+keywords:
+  - Modelo Windkessel
+  - Sistema cardiovascular
+  - Controlador PID
+  - ' Modelo matemático'
+  - ' Simulaciones numéricas'
+license: BSD-2-Clause
+version: '1.0'
+date-released: '2026-10-21'
