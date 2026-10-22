@@ -133,25 +133,53 @@ Evaluando con los parámetros de cada caso:
 | Normotenso | $\begin{bmatrix} 0 & -1000 \\ 0.6667 & -67.333 \end{bmatrix}$ | $\begin{bmatrix} 1000 \\ 66.667 \end{bmatrix}$ |
 | Hipertenso | $\begin{bmatrix} 0 & -1000 \\ 1 & -101 \end{bmatrix}$ | $\begin{bmatrix} 1000 \\ 100 \end{bmatrix}$ |
 
+### Modelo de ecuaciones integro-diferenciales
+
+Partiendo de la conservación del flujo en el nodo de $P_p(t)$:
+
+$$F_a(t) = F_Z(t) + F_L(t) = F_C(t) + F_R(t)$$
+
+con
+
+$$F_Z(t) = \frac{P_a(t) - P_p(t)}{Z}, \quad F_L(t) = \frac{1}{L}\int \left[P_a(t) - P_p(t)\right]dt, \quad F_C(t) = C\,\frac{dP_p(t)}{dt}, \quad F_R(t) = \frac{P_p(t)}{R}$$
+
+Sustituyendo y agrupando los términos en $P_p(t)$ se obtiene el modelo integro-diferencial:
+
+$$C\,\frac{dP_p(t)}{dt} + \left(\frac{1}{R} + \frac{1}{Z}\right)P_p(t) = \frac{P_a(t)}{Z} + \frac{1}{L}\int \left[P_a(t) - P_p(t)\right]dt$$
+
+La única variable desconocida es la salida $P_p(t)$. Como aparece también dentro de una derivada y de una integral, no puede despejarse de forma algebraica explícita, por lo que el modelo se deja en esta forma.
+
 ### Función de transferencia
 
 Aplicando la transformada de Laplace con condiciones iniciales nulas:
 
-$$F_L(s) = \frac{P_a(s) - P_p(s)}{sL}$$
+$$F_Z(s) + F_L(s) = F_C(s) + F_R(s)$$
 
-$$sC\,P_p(s) = F_L(s) + \frac{P_a(s) - P_p(s)}{Z} - \frac{P_p(s)}{R}$$
+$$F_Z(s) = \frac{P_a(s) - P_p(s)}{Z}, \quad F_L(s) = \frac{P_a(s) - P_p(s)}{Ls}, \quad F_C(s) = Cs\,P_p(s), \quad F_R(s) = \frac{P_p(s)}{R}$$
 
-Sustituyendo $F_L(s)$ y despejando $P_p(s)/P_a(s)$:
+Sustituyendo:
 
-$$G(s) = \frac{P_p(s)}{P_a(s)} = \frac{\dfrac{L}{Z}\,s + 1}{LC\,s^2 + L\left(\dfrac{1}{R} + \dfrac{1}{Z}\right)s + 1}$$
+$$\frac{P_a(s) - P_p(s)}{Z} + \frac{P_a(s) - P_p(s)}{Ls} = Cs\,P_p(s) + \frac{P_p(s)}{R}$$
 
-Con $Z = 0.01$, $L = 0.001$ y $R = 1$ el numerador y el coeficiente de $s$ en el denominador son iguales en los tres casos ($L/Z = 0.1$ y $L(1/R + 1/Z) = 0.101$); solo cambia $LC$:
+Agrupando $P_a(s)$ y $P_p(s)$:
 
-$$G_{hipo}(s) = \frac{0.1\,s + 1}{0.0035\,s^2 + 0.101\,s + 1}$$
+$$P_a(s)\left(\frac{1}{Z} + \frac{1}{Ls}\right) = P_p(s)\left(Cs + \frac{1}{R} + \frac{1}{Z} + \frac{1}{Ls}\right)$$
 
-$$G_{normo}(s) = \frac{0.1\,s + 1}{0.0015\,s^2 + 0.101\,s + 1}$$
+$$P_a(s)\,\frac{Ls + Z}{LZs} = P_p(s)\,\frac{CLRZ\,s^2 + L(Z+R)\,s + RZ}{RLZs}$$
 
-$$G_{hiper}(s) = \frac{0.1\,s + 1}{0.001\,s^2 + 0.101\,s + 1}$$
+Despejando:
+
+$$G(s) = \frac{P_p(s)}{P_a(s)} = \frac{LR\,s + RZ}{CLRZ\,s^2 + L(Z+R)\,s + RZ}$$
+
+Con $Z = 0.01$, $L = 0.001$ y $R = 1$ el numerador es $0.001\,s + 0.01$ y el coeficiente de $s$ en el denominador es $0.00101$ en los tres casos; solo cambia el coeficiente de $s^2$, que vale $CLRZ = C \times 10^{-5}$:
+
+$$G_{hipo}(s) = \frac{0.001\,s + 0.01}{3.5\times10^{-5}\,s^2 + 0.00101\,s + 0.01} = \frac{0.1\,s + 1}{0.0035\,s^2 + 0.101\,s + 1}$$
+
+$$G_{normo}(s) = \frac{0.001\,s + 0.01}{1.5\times10^{-5}\,s^2 + 0.00101\,s + 0.01} = \frac{0.1\,s + 1}{0.0015\,s^2 + 0.101\,s + 1}$$
+
+$$G_{hiper}(s) = \frac{0.001\,s + 0.01}{1\times10^{-5}\,s^2 + 0.00101\,s + 0.01} = \frac{0.1\,s + 1}{0.001\,s^2 + 0.101\,s + 1}$$
+
+(la segunda igualdad de cada línea resulta de dividir numerador y denominador entre $RZ = 0.01$).
 
 Las tres funciones son de **segundo orden**, lo que coincide con los dos elementos independientes de almacenamiento de energía ($C$ y $L$). Todas tienen un cero en $s = -Z/L = -10\ \text{s}^{-1}$.
 
@@ -173,7 +201,19 @@ Las diferencias entre los casos son, por tanto, de carácter **transitorio**, no
 
 ### Análisis de estabilidad
 
-Polos obtenidos de las raíces del denominador (coinciden con los valores propios de $A$):
+Con $a = CLRZ$, $b = L(Z+R)$ y $c = RZ$, los polos son las raíces del denominador:
+
+$$\lambda_{1,2} = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$$
+
+El signo del discriminante $b^2 - 4ac$ determina el tipo de respuesta: negativo, polos complejos conjugados (subamortiguada); positivo, polos reales distintos (sobreamortiguada). Con los parámetros de la práctica $b^2 = 1.0201\times10^{-6}$ y $4ac = 4\times10^{-7}\,C$, por lo que el amortiguamiento crítico ocurriría en $C \approx 2.55$ ml/mmHg: el caso hipotenso ($C = 3.5$) queda por encima y los casos normotenso e hipertenso por debajo.
+
+| Modelo | $b^2 - 4ac$ |
+|---|---|
+| Hipotenso | $-3.799\times10^{-7}$ |
+| Normotenso | $4.201\times10^{-7}$ |
+| Hipertenso | $6.201\times10^{-7}$ |
+
+Polos obtenidos (coinciden con los valores propios de $A$):
 
 | Modelo | $\omega_n$ (rad/s) | $\zeta$ | Polos | Tipo de respuesta |
 |---|---|---|---|---|
@@ -181,7 +221,7 @@ Polos obtenidos de las raíces del denominador (coinciden con los valores propio
 | Normotenso | 25.82 | 1.304 | $-12.06,\ -55.27$ | Sobreamortiguada |
 | Hipertenso | 31.62 | 1.597 | $-11.13,\ -89.87$ | Sobreamortiguada |
 
-Los tres sistemas son **estables** (todos los polos en el semiplano izquierdo). Al disminuir $C$ aumenta $\omega_n$ y $\zeta$: el polo rápido se aleja del origen y la respuesta se vuelve más veloz. En el hipotenso los polos son complejos conjugados, por lo que aparece oscilación amortiguada.
+Los tres sistemas son **estables** (todos los polos en el semiplano izquierdo). Ningún caso es críticamente amortiguado: el hipertenso tiene dos polos reales distintos. Al disminuir $C$ aumenta $\omega_n$ y $\zeta$: el polo rápido se aleja del origen y la respuesta se vuelve más veloz. En el hipotenso los polos son complejos conjugados, por lo que aparece oscilación amortiguada.
 
 ![Mapa de polos y ceros](Imagenes/polos_ceros.png)
 
