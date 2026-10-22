@@ -111,7 +111,7 @@ Todos los polos tienen parte real negativa, por lo que los tres sistemas son est
 
 ## Lista de archivos incluidos en el repositorio
 
-1. Cuaderno computacional de MATLAB \[.mlx].
+1. Cuaderno computacional de MATLAB \[.mlx] y \[.pdf].
 2. Modelo de Simulink \[.slx].
 3. Archivos de VSC \[.py].
 4. Señal de entrada utilizada en las simulaciones \[signals.xlsx].
