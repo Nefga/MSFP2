@@ -30,7 +30,7 @@ La asignatura de Modelado de Sistemas Fisiológicos forma parte del plan de estu
 2. Determinar el modelo de ecuaciones integro-diferenciales.
 3. Analizar la estabilidad del sistema.
 4. Determinar el error en estado estacionario.
-5. Emular la respuesta del modelo Windkessel en Simulink/Simscape mediante ecuaciones de estado, función de transferencia y circuito equivalente, para los casos hipotenso, normotenso e hipertenso.
+5. Emular la respuesta del modelo Windkessel en Simulink/MATLAB para los casos hipotenso, normotenso e hipertenso.
 6. Sintonizar las ganancias de un controlador PID en Simulink/MATLAB para el caso hipotenso y otro para el hipertenso, tomando la respuesta normotensa como referencia.
 7. Simular la respuesta de los tres casos en lazo abierto y de los casos hipotenso e hipertenso en lazo cerrado en Simulink/MATLAB.
 8. Obtener la respuesta en lazo abierto y en lazo cerrado con el controlador PID en VS Code/Python con la función de transferencia.
@@ -43,18 +43,82 @@ Los tres modelos se excitan con la misma señal aleatoria uniforme (mínimo −0
 
 Palabras clave: Modelo Windkessel; Sistema cardiovascular; Controlador PID; Modelo matemático; Simulaciones numéricas.
 
+## Análisis matemático
+
+### Modelo de ecuaciones integro-diferenciales
+
+Por conservación del flujo en el nodo de $P_p(t)$:
+
+$$F_a(t) = F_Z(t) + F_L(t) = F_C(t) + F_R(t)$$
+
+con
+
+$$F_Z(t) = \frac{P_a(t) - P_p(t)}{Z}, \quad F_L(t) = \frac{1}{L}\int \left[P_a(t) - P_p(t)\right]dt, \quad F_C(t) = C\,\frac{dP_p(t)}{dt}, \quad F_R(t) = \frac{P_p(t)}{R}$$
+
+Sustituyendo y agrupando los términos en $P_p(t)$:
+
+$$C\,\frac{dP_p(t)}{dt} + \left(\frac{1}{R} + \frac{1}{Z}\right)P_p(t) = \frac{P_a(t)}{Z} + \frac{1}{L}\int \left[P_a(t) - P_p(t)\right]dt$$
+
+La única variable desconocida es la salida $P_p(t)$. Como aparece también dentro de una derivada y de una integral, no puede despejarse de forma algebraica explícita, por lo que el modelo se deja en esta forma.
+
+### Función de transferencia
+
+Aplicando la transformada de Laplace con condiciones iniciales nulas:
+
+$$F_Z(s) + F_L(s) = F_C(s) + F_R(s)$$
+
+$$F_Z(s) = \frac{P_a(s) - P_p(s)}{Z}, \quad F_L(s) = \frac{P_a(s) - P_p(s)}{Ls}, \quad F_C(s) = Cs\,P_p(s), \quad F_R(s) = \frac{P_p(s)}{R}$$
+
+$$\frac{P_a(s) - P_p(s)}{Z} + \frac{P_a(s) - P_p(s)}{Ls} = Cs\,P_p(s) + \frac{P_p(s)}{R}$$
+
+$$P_a(s)\left(\frac{1}{Z} + \frac{1}{Ls}\right) = P_p(s)\left(Cs + \frac{1}{R} + \frac{1}{Z} + \frac{1}{Ls}\right)$$
+
+$$P_a(s)\,\frac{Ls + Z}{LZs} = P_p(s)\,\frac{CLRZ\,s^2 + L(Z+R)\,s + RZ}{RLZs}$$
+
+$$G(s) = \frac{P_p(s)}{P_a(s)} = \frac{LR\,s + RZ}{CLRZ\,s^2 + L(Z+R)\,s + RZ}$$
+
+Con $Z = 0.01$, $L = 0.001$ y $R = 1$, el numerador es $0.001\,s + 0.01$ y el coeficiente de $s$ en el denominador es $0.00101$ en los tres casos; solo cambia el coeficiente de $s^2$, que vale $CLRZ = C \times 10^{-5}$:
+
+$$G_{hipo}(s) = \frac{0.001\,s + 0.01}{3.5\times10^{-5}\,s^2 + 0.00101\,s + 0.01}$$
+
+$$G_{normo}(s) = \frac{0.001\,s + 0.01}{1.5\times10^{-5}\,s^2 + 0.00101\,s + 0.01}$$
+
+$$G_{hiper}(s) = \frac{0.001\,s + 0.01}{1\times10^{-5}\,s^2 + 0.00101\,s + 0.01}$$
+
+Las tres funciones son de segundo orden, lo que coincide con los dos elementos independientes de almacenamiento de energía ($C$ y $L$).
+
+### Error en estado estacionario
+
+Para una entrada escalón de amplitud $A_0$, por el teorema del valor final:
+
+$$P_p(\infty) = \lim_{s\to 0} s\,G(s)\,\frac{A_0}{s} = G(0)\,A_0 = A_0$$
+
+Como $G(0) = 1$ en los tres modelos, el error entre la entrada y la salida es $e_{ss} = 0$ V en lazo abierto para los casos hipotenso, normotenso e hipertenso.
+
+### Estabilidad en lazo abierto
+
+Con $a = CLRZ$, $b = L(Z+R)$ y $c = RZ$, los polos son las raíces del denominador:
+
+$$\lambda_{1,2} = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$$
+
+| Modelo | $C$ (ml/mmHg) | $b^2 - 4ac$ | Polos | Respuesta |
+|---|---|---|---|---|
+| Hipotenso | 3.5 | $-3.799\times10^{-7}$ | $-14.43 \pm 8.81j$ | Estable y subamortiguada |
+| Normotenso | 1.5 | $4.201\times10^{-7}$ | $-12.06,\ -55.27$ | Estable y sobreamortiguada |
+| Hipertenso | 1.0 | $6.201\times10^{-7}$ | $-11.13,\ -89.87$ | Estable y sobreamortiguada |
+
+Todos los polos tienen parte real negativa, por lo que los tres sistemas son estables. El amortiguamiento crítico ocurriría en $C \approx 2.55$ ml/mmHg; ningún caso lo alcanza.
+
 ## Lista de archivos incluidos en el repositorio
 
 1. Cuaderno computacional de MATLAB \[.mlx].
 2. Modelo de Simulink \[.slx].
-3. Modelo de Simscape Electrical del circuito Windkessel.
-4. Archivos de VSC \[.py].
-5. Señal de entrada utilizada en las simulaciones \[signals.xlsx].
-6. Imagen con los parámetros de los controladores.
-7. Imágenes de las simulaciones \[.pdf y .png].
-8. Diagrama biológico del sistema cardiovascular.
-9. Análisis matemático: Función de transferencia, modelo de ecuaciones integro-diferenciales, estabilidad y error en estado estacionario.
-10. Archivo CITATION.cff.
+3. Archivos de VSC \[.py].
+4. Señal de entrada utilizada en las simulaciones \[signals.xlsx].
+5. Imagen con los parámetros de los controladores.
+6. Imágenes de las simulaciones \[.pdf y .png].
+7. Diagrama biológico del sistema cardiovascular.
+8. Análisis matemático: Función de transferencia, modelo de ecuaciones integro-diferenciales, estabilidad y error en estado estacionario.
 
 ## Referencias
 
